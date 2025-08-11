@@ -1,0 +1,105 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+
+  recipes   Recipe[]
+}
+
+model Recipe {
+  id              String      @id @default(cuid())
+  userId          String
+  title           String
+  baseServings    Int
+  currentServings Int
+  instructionsMd  String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ingredients Ingredient[]
+  images      Image[]
+
+  @@index([userId])
+}
+
+model Ingredient {
+  id         String   @id @default(cuid())
+  recipeId   String
+  name       String
+  unit       String?
+  note       String?
+  amountBase Float
+  gramsBase  Float
+  densityHint Float?
+
+  recipe    Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  nutrition Nutrition?
+
+  @@index([recipeId])
+}
+
+model Nutrition {
+  id             String     @id @default(cuid())
+  ingredientId   String     @unique
+  per100Kcal     Float
+  per100Protein  Float
+  per100Carbs    Float
+  per100Fat      Float
+  per100Fiber    Float?
+  per100Sugar    Float?
+  per100Sodium   Float?
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+}
+
+model Image {
+  id          String   @id @default(cuid())
+  recipeId    String
+  kind        String
+  url         String
+  attribution String?
+  width       Int?
+  height      Int?
+  createdAt   DateTime @default(now())
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([recipeId])
+}
+
+model Density {
+  key      String  @id
+  gPerCup  Float?
+  gPerTbsp Float?
+  gPerTsp  Float?
+  gPerMl   Float?
+  note     String?
+}
+
+model FoodIndex {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  per100Kcal   Float
+  per100Protein Float
+  per100Carbs  Float
+  per100Fat    Float
+  per100Fiber  Float?
+  per100Sugar  Float?
+  per100Sodium Float?
+  densityKey   String?
+
+  density Density? @relation(fields: [densityKey], references: [key])
+}
