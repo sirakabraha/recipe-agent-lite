@@ -1,37 +1,25 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-export default function Home(){
-  const [text,setText]=useState('Pfannkuchen\n2 EL Zucker\n300 ml Milch\nZubereitung\nAlles mischen');
-  const [draft,setDraft]=useState<any>(null);
-  const [recipeId,setRecipeId]=useState<string>('');
+type ApiHealth = { ok: boolean; ts?: string };
 
-  async function importText(){
-    const r = await fetch('/api/import/text',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text }) });
-    setDraft(await r.json());
-  }
-  async function save(){
-    const r = await fetch('/api/recipes',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(draft) });
-    const j = await r.json(); setRecipeId(j.id);
-  }
+export default function Home() {
+  const [health, setHealth] = useState<ApiHealth | null>(null);
+
+  useEffect(() => {
+    const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001';
+    fetch(`${base}/api/health`)
+      .then((r) => r.json())
+      .then((data: ApiHealth) => setHealth(data))
+      .catch(() => setHealth({ ok: false }));
+  }, []);
 
   return (
-    <main className="p-6 max-w-3xl mx-auto space-y-4">
+    <main className="p-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-semibold">Recipe Agent</h1>
-      <section className="space-y-2">
-        <textarea className="border w-full h-40 p-2" value={text} onChange={e=>setText(e.target.value)} />
-        <div className="flex gap-2">
-          <button className="border px-3 py-2" onClick={importText}>Importieren</button>
-          {draft && <button className="border px-3 py-2" onClick={save}>Speichern</button>}
-          {recipeId && <a className="border px-3 py-2" href={`/recipes/${recipeId}`}>Zum Rezept</a>}
-        </div>
-      </section>
-      {draft && (
-        <section>
-          <h2 className="text-xl font-medium">Vorschau</h2>
-          <pre className="bg-gray-50 p-3 overflow-auto text-sm">{JSON.stringify(draft,null,2)}</pre>
-        </section>
-      )}
+      <p className="mt-2 text-gray-600">
+        Hello World — API Health: {health?.ok ? 'OK' : '…'}
+      </p>
     </main>
   );
 }
